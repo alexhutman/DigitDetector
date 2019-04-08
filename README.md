@@ -1,4 +1,4 @@
-#DigitDetector
+# DigitDetector
 
 This directory contains scanned handwritten digits.
 The process took a set of digits written in individual cells, cropped them and resized them to fit a 32x32 bitmap.
@@ -9,7 +9,7 @@ The process took a set of digits written in individual cells, cropped them and r
 	- type is either bmp or data
 
 The bmp is an actual bitmap image that you can open in a graphical viewer but it requires a bit more processing to read in (though it isn't hard).
-The data is more human readable and easily read with a simple program.
+- The data is more human readable and easily read with a simple program.
 	- The format consists of one line WIDTH HEIGHT giving the dimensions of the image (e.g. 32x32)
 	- This is then followed by HEIGHT rows of WIDTH gray-scale values.
 	- The values range from 0 to 255 with 0 meaning BLACK and 255 meaning WHITE
