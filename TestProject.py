@@ -12,23 +12,13 @@ But this is for displaying images not processing or recognizing images.
 from os import listdir
 from os.path import isfile, join
 import re
-import json
 from keras.models import Sequential
 from keras.layers import Dense, Activation
 import numpy as np
 import sys
 import random
-""" 
-Reads in the given JSON file as outlined in the README.txt file.
-"""
-def read_data(file):
-	try:
-		with open(file, 'r') as inf:
-			bitmap = json.load(inf)
+from DigitClassifier import DigitClassifier
 
-		return bitmap
-	except FileNotFoundError as err:
-		print("File Not Found: {0}.".format(err))
 
 """ 
 Prints out the given "image" (a 2-dimensional array).
@@ -62,6 +52,7 @@ def main():
 	y = [i.group(0) for i in x if i]
 
 	partitions = kCross(9, y)
+	xd = DigitClassifier(partitions, "Neural")
 	#train = partitions[0]
 	#test = partitions[1]
 
