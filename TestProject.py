@@ -46,7 +46,7 @@ Main entry point.  Assumes all the arguments passed to it are file names.
 For each argument, reads in the file and the prints it out.
 """
 def main():
-	mypath = "C:/Users/Alex/Dropbox/School Snoot/Spring 2019/AI/DigitDetector/digit_data"
+	mypath = "C:/DigitProject/DigitDetector/digit_data"
 	files = [f for f in listdir(mypath) if isfile(join(mypath, f))]
 	x = [re.search("^input_[0-9]+_[0-9]+_[0-9]+\.json$", i) for i in files]
 	y = [i.group(0) for i in x if i]
