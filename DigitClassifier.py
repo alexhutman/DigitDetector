@@ -105,3 +105,15 @@ Reads in the given JSON file as outlined in the README.txt file.
 			return bitmap
 		except FileNotFoundError as err:
 			print("File Not Found: {0}.".format(err))
+
+	def create_model(self, in_dim, units, activation):
+		model = Sequential()
+		model.add(Dense(units=units[0], input_dim=in_dim)) # First (hidden) layer
+		model.add(Activation(activation))
+		for i in units[1:]:
+			model.add(Dense(units=i)) 
+			model.add(Activation(activation))
+		model.compile(loss='mean_squared_error',
+		              optimizer='sgd',
+		              metrics=['accuracy'])
+		return model
