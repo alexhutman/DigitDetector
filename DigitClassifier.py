@@ -22,25 +22,16 @@ from sklearn import metrics as jeff
 import math
 
 class DigitClassifier:
-	def __init__(self, data, model):
+	def __init__(self, data):
 		self.data = data
-		self.model = model
 
-	
-		model = Sequential()
-		model.add(Dense(units=1024, input_dim=1024)) # First (hidden) layer
-		model.add(Activation('sigmoid'))
-		model.add(Dense(units=50)) # First (hidden) layer
-		model.add(Activation('sigmoid'))
-		model.add(Dense(units=1))   # Second, final (output) layer
-		model.add(Activation('sigmoid'))
-		
-		model.compile(loss='mean_squared_error',
-		              optimizer='sgd',
-		              metrics=['accuracy'])
-		path_beg = "C:/DigitProject/DigitDetector/digit_data/"
-		x_train = self.data[:len(self.data)-1]
-		x_train_data = [[self.read_data(path_beg + i) for i in j] for j in self.data[:len(self.data)-1]]
+		path_beg = "C:/Users/Alex/Dropbox/School Snoot/Spring 2019/AI/DigitDetector/digit_data/"
+
+		n = len(self.data)-1
+		x_test = self.data.pop(n)
+		x_train = self.data
+
+		x_train_data = [[self.read_data(path_beg + i) for i in j] for j in x_train]
 		y_train_arr = [[re.search("^input_[0-9]+_([0-9]+)_[0-9]+\.json$", i) for i in x_train[j]] for j in range(len(x_train))]
 		y_train_data = [[int(i.group(1)) for i in y_train_arr[j] if i] for j in range(len(y_train_arr))]
 
@@ -52,6 +43,7 @@ class DigitClassifier:
 		#print("Length[0]={}".format(len(y_train_data[0])))
 		#print("Length[0][0]={}".format(len(x_train_data[0][0])))
 		#sys.exit(1)
+		model = self.create_model(1024,[1024,50,1], 'sigmoid')
 		model.fit(x_train_data, y_train_data, epochs=10, batch_size=8)
 		
 
@@ -60,10 +52,9 @@ class DigitClassifier:
 	
 		# Train the model, iterating on the data in batches of 32 samples (try batch_size=1)
 		
-		x_test = self.data[-1:]
-		x_test_data = [[self.read_data(path_beg + i) for i in j] for j in self.data[-1:]]   # Random input data
-		y_test_arr = [[re.search("^input_[0-9]+_([0-9]+)_[0-9]+\.json$", i) for i in x_test[j]] for j in range(len(x_test))]
-		y_test_data = [[int(i.group(1)) for i in y_test_arr[j] if i] for j in range(len(y_test_arr))]
+		x_test_data = [self.read_data(path_beg + i) for i in x_test]   # Random input data
+		y_test_arr = [re.search("^input_[0-9]+_([0-9]+)_[0-9]+\.json$", i) for i in x_test]
+		y_test_data = [int(i.group(1)) for i in y_test_arr if i]
 
 
 
