@@ -51,8 +51,8 @@ def main():
 	x = [re.search("^input_[0-9]+_[0-9]+_[0-9]+\.json$", i) for i in files]
 	y = [i.group(0) for i in x if i]
 
-	partitions = kCross(9, y)
-	xd = DigitClassifier(partitions, "Neural")
+	partitions = kCross(10, y)
+	xd = DigitClassifier(partitions)
 	#train = partitions[0]
 	#test = partitions[1]
 
