@@ -54,7 +54,6 @@ def main():
 <<<<<<< HEAD
 	partitions = kCross(10, y)
 =======
-	partitions = kCross(9, y)
 >>>>>>> b081fe02d41c798a40b027a879122843500cfbd1
 	xd = DigitClassifier(partitions)
 	#train = partitions[0]
