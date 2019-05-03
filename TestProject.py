@@ -18,6 +18,7 @@ import numpy as np
 import sys
 import random
 from DigitClassifier import DigitClassifier
+from DigitNaiveBayes import DigitNaiveBayes
 
 
 """ 
@@ -46,16 +47,14 @@ Main entry point.  Assumes all the arguments passed to it are file names.
 For each argument, reads in the file and the prints it out.
 """
 def main():
-	mypath = "C:/Users/Alex/Dropbox/School Snoot/Spring 2019/AI/DigitDetector/digit_data/"
+	mypath = "C:/Users/Alex/Dropbox/School Snoot/Spring 2019/AI/DigitDetector/all_digits/"
 	files = [f for f in listdir(mypath) if isfile(join(mypath, f))]
 	x = [re.search("^input_[0-9]+_[0-9]+_[0-9]+\.json$", i) for i in files]
 	y = [i.group(0) for i in x if i]
 
-<<<<<<< HEAD
 	partitions = kCross(10, y)
-=======
->>>>>>> b081fe02d41c798a40b027a879122843500cfbd1
-	xd = DigitClassifier(partitions)
+	#DigitClassifier(partitions, mypath, 'neural')
+	DigitNaiveBayes(partitions, mypath, 'kNN')
 	#train = partitions[0]
 	#test = partitions[1]
 

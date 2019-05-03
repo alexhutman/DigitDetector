@@ -8,10 +8,9 @@ from sklearn import metrics as jeff
 import math
 
 class DigitClassifier:
-	def __init__(self, data):
+	def __init__(self, data, path, model_type):
 		self.data = data
 
-		path_beg = "C:/DigitProject/DigitDetector/digit_data/"
 		#self.data[8].pop(0)
 		#self.data[8].pop(1)
 		#self.data[8].pop(2)
@@ -25,7 +24,7 @@ class DigitClassifier:
 			x_train = self.data
 		
 
-			x_train_data = [[self.read_data(path_beg + i) for i in j] for j in x_train]
+			x_train_data = [[self.read_data(path + i) for i in j] for j in x_train]
 			y_train_arr = [[re.search("^input_[0-9]+_([0-9]+)_[0-9]+\.json$", i) for i in x_train[j]] for j in range(len(x_train))]
 			y_train_data = [[int(i.group(1)) for i in y_train_arr[j] if i] for j in range(len(y_train_arr))]
 	
@@ -37,7 +36,7 @@ class DigitClassifier:
 		#print("Length[0]={}".format(len(y_train_data[0])))
 		#print("Length[0][0]={}".format(len(x_train_data[0][0])))
 		#sys.exit(1)
-			model = self.create_model(1024,[1024,50,1], 'sigmoid')
+			model = self.create_model(1024,[1024,50,1], 'sigmoid', model_type)
 			model.fit(x_train_data, y_train_data, epochs=10, batch_size=8)
 		
 
@@ -46,7 +45,7 @@ class DigitClassifier:
 	
 		# Train the model, iterating on the data in batches of 32 samples (try batch_size=1)
 		
-			x_test_data = [self.read_data(path_beg + i) for i in x_test]   # Random input data
+			x_test_data = [self.read_data(path + i) for i in x_test]   # Random input data
 			y_test_arr = [re.search("^input_[0-9]+_([0-9]+)_[0-9]+\.json$", i) for i in x_test]
 			y_test_data = [int(i.group(1)) for i in y_test_arr if i]
 
@@ -72,14 +71,10 @@ class DigitClassifier:
 			totalFalseNegatives += fn
 			totalTrueNegatives += tn
 
-			print(xd)
-			mcc = ((tp*tn)-fp*fn)/math.sqrt((tp+fp)*(tp+fn)*(tn+fp)*(tn+fn))
-			maxScore += mcc
-			print(mcc)
-			self.data.insert(8,x_test)
+			self.data.insert(len(self.data),x_test)
 		print(totalTrueNegatives, totalTruePositives, totalFalsePostives, totalFalseNegatives)
 		totalmcc = ((totalTruePositives*totalTrueNegatives)-totalFalsePostives*totalFalseNegatives)/math.sqrt((totalTruePositives+totalFalsePostives)*(totalTruePositives+totalFalseNegatives)*(totalTrueNegatives+totalFalsePostives)*(totalTrueNegatives+totalFalseNegatives))
-		print(maxScore)
+		print(totalmcc)
 		#print("Score was {}.".format(score))
 		#print("Labels were {}.".format(model.metrics_names))
 		
@@ -100,14 +95,23 @@ Reads in the given JSON file as outlined in the README.txt file.
 		except FileNotFoundError as err:
 			print("File Not Found: {0}.".format(err))
 
-	def create_model(self, in_dim, units, activation):
-		model = Sequential()
-		model.add(Dense(units=units[0], input_dim=in_dim)) # First (hidden) layer
-		model.add(Activation(activation))
-		for i in units[1:]:
-			model.add(Dense(units=i)) 
+	def create_model(self, in_dim, units, activation, model_type):
+		assert model_type in ['neural','svm','bayes']
+		
+		if model_type == 'neural':
+			model = Sequential()
+			model.add(Dense(units=units[0], input_dim=in_dim)) # First (hidden) layer
 			model.add(Activation(activation))
-		model.compile(loss='mean_squared_error',
-		              optimizer='sgd',
-		              metrics=['accuracy'])
+			for i in units[1:]:
+				model.add(Dense(units=i)) 
+				model.add(Activation(activation))
+			model.compile(loss='mean_squared_error',
+		    	          optimizer='sgd',
+		    	          metrics=['accuracy'])
+		elif model_type == 'svm':
+			model = svm.LinearSVC()
+		elif model_type == 'bayes':
+			model = GaussianNB()
+		
+		
 		return model
