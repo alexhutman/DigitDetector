@@ -12,8 +12,14 @@ from sklearn.metrics import confusion_matrix
 from sklearn.naive_bayes import GaussianNB
 from sklearn.metrics import matthews_corrcoef
 from sklearn.metrics import accuracy_score
+from sklearn.discriminant_analysis import LinearDiscriminantAnalysis
 import sklearn.neighbors
 
+""" Convert a digit to an array of 0's and a 1.  E.g. 3 converts to 0, 0, 0, 1, 0, 0, 0, ...."""
+def convert(digit, num_digits):
+	d = [0]*num_digits
+	d[digit] = 1
+	return np.array(d)
 
 class DigitNaiveBayes:
 	def __init__(self, data, base_path, model_type):
@@ -38,11 +44,15 @@ class DigitNaiveBayes:
 			#print("Length[0]={}".format(len(y_train_data[0])))
 			#print("Length[0][0]={}".format(len(x_train_data[0][0])))
 			#sys.exit(1)
+			num_digits = 10
 			print("DEBUG: DNB Creating GaussianNB")
-			model = self.create_model(1024,[1024,50,1], 'sigmoid', model_type)
+			model = self.create_model(1024,[512,512,10], 'sigmoid', model_type)
 			print("DEBUG: DNB Fitting GaussianNB")
 			if model_type == 'neural':
-				model.fit(x_train_data, y_train_data, epochs=10, batch_size=8)
+				print("Before: {}".format(y_train_data))
+				y_train_data_adj = np.array([convert(digit, num_digits) for digit in y_train_data])
+				print("After: {}".format(y_train_data_adj))
+				model.fit(x_train_data, y_train_data_adj, epochs=10, batch_size=8)
 			else:
 				model.fit(x_train_data, y_train_data)
 			print("DEBUG: DNB Fitted GaussianNB")
@@ -61,11 +71,12 @@ class DigitNaiveBayes:
 			print("DEDNG Calling predict")
 			# Evaluate the model from a sample test data set
 			y_predict = model.predict(x_test_data)
-			#if model_type == 'neural':
-			#	y_predict = np.array([ round(p[0]) for p in y_predict])
+			print(y_predict)
+			if model_type == 'neural':
+				y_predict = np.array([np.argmax(p) for p in y_predict])
+				print(y_predict)
+
 	
-	
-			#y_predict = np.array([ round(p[0]) for p in y_predict])
 			xd = jeff.confusion_matrix(y_test_data, y_predict)
 			if i == 0:
 				sum_matrices = np.zeros(xd.shape)
@@ -107,10 +118,11 @@ Reads in the given JSON file as outlined in the README.txt file.
 			print("File Not Found: {0}.".format(err))
 
 	def create_model(self, in_dim, units, activation, model_type):
-		assert model_type in ['neural','svm','bayes', 'kNN']
+		assert model_type in ['neural','svm','bayes', 'kNN','LDA']
 		
 		if model_type == 'neural':
 			model = Sequential()
+			#model = self.create_model(1024,[1024,50,10], 'sigmoid', model_type)
 			model.add(Dense(units=units[0], input_dim=in_dim)) # First (hidden) layer
 			model.add(Activation(activation))
 			for i in units[1:]:
@@ -125,6 +137,7 @@ Reads in the given JSON file as outlined in the README.txt file.
 			model = GaussianNB()
 		elif model_type == 'kNN':
 			model = sklearn.neighbors.KNeighborsClassifier(n_neighbors=5, weights='distance', algorithm='kd_tree', leaf_size=30, p=2, metric='minkowski', metric_params=None, n_jobs=None)
-		
+		elif model_type == 'LDA':
+			model = LinearDiscriminantAnalysis(solver="svd", store_covariance=True)
 		
 		return model

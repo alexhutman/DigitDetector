@@ -96,7 +96,7 @@ Reads in the given JSON file as outlined in the README.txt file.
 			print("File Not Found: {0}.".format(err))
 
 	def create_model(self, in_dim, units, activation, model_type):
-		assert model_type in ['neural','svm','bayes']
+		assert model_type in ['neural','svm','bayes','LDA','kNN']
 		
 		if model_type == 'neural':
 			model = Sequential()
