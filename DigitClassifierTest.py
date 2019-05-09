@@ -49,7 +49,6 @@ For each argument, reads in the file and the prints it out.
 """
 def main():
 	mypath = "C:/DigitProject/DigitDetector/all_digits/"
-	my01path = "C:/DigitProject/DigitDetector/digit_data/"
 	competition = false
 
 	
@@ -63,7 +62,7 @@ def main():
 
 		partitions = kCross(10, y)
 	#DigitClassifier(partitions, my01path, 'neural')
-		DigitNaiveBayes(partitions, mypath, 'kNN')
+		DigitNaiveBayes(partitions, mypath, 'neural', 1024, )
 	else:
 		DigitNaiveBayes(y, mypath, 'svm')
 	#train = partitions[0]

@@ -1,5 +1,7 @@
 import sys
 import re
+from os import listdir
+from os.path import isfile, join
 import json
 from sklearn import metrics as jeff
 import math
@@ -14,6 +16,8 @@ from sklearn.metrics import matthews_corrcoef
 from sklearn.metrics import accuracy_score
 from sklearn.discriminant_analysis import LinearDiscriminantAnalysis
 import sklearn.neighbors
+from joblib import dump, load
+import csv
 
 """ Convert a digit to an array of 0's and a 1.  E.g. 3 converts to 0, 0, 0, 1, 0, 0, 0, ...."""
 def convert(digit, num_digits):
@@ -28,76 +32,114 @@ class DigitNaiveBayes:
 		print("DEBUG: DNB.  Begin")
 		path_beg = base_path
 
-		sum_matrices = None
-		for i in range(len(self.data)):
-			x_test = self.data.pop(i)
-			x_train = self.data
+		competition = True
 
-			x_train_data = [[self.read_data(path_beg + i) for i in j] for j in x_train]
-			y_train_arr = [[re.search("^input_[0-9]+_([0-9]+)_[0-9]+\.json$", i) for i in x_train[j]] for j in range(len(x_train))]
-			y_train_data = [[int(i.group(1)) for i in y_train_arr[j] if i] for j in range(len(y_train_arr))]
+		if not competition: 
+			sum_matrices = None
+			for i in range(len(self.data)):
+				x_test = self.data.pop(i)
+				x_train = self.data
+
+				x_train_data = [[self.read_data(path_beg + i) for i in j] for j in x_train]
+				y_train_arr = [[re.search("^input_[0-9]+_([0-9]+)_[0-9]+\.json$", i) for i in x_train[j]] for j in range(len(x_train))]
+				y_train_data = [[int(i.group(1)) for i in y_train_arr[j] if i] for j in range(len(y_train_arr))]
 	
-			x_train_data = np.array(x_train_data).reshape((-1,1024))
-			y_train_data = np.array(y_train_data).reshape((-1))
+				x_train_data = np.array(x_train_data).reshape((-1,1024))
+				y_train_data = np.array(y_train_data).reshape((-1))
 			#print(y_train_data)
 			#print("Length={}".format(len(y_train_data)))
 			#print("Length[0]={}".format(len(y_train_data[0])))
 			#print("Length[0][0]={}".format(len(x_train_data[0][0])))
 			#sys.exit(1)
-			num_digits = 10
-			print("DEBUG: DNB Creating GaussianNB")
-			model = self.create_model(1024,[512,512,10], 'sigmoid', model_type)
-			print("DEBUG: DNB Fitting GaussianNB")
-			if model_type == 'neural':
-				print("Before: {}".format(y_train_data))
-				y_train_data_adj = np.array([convert(digit, num_digits) for digit in y_train_data])
-				print("After: {}".format(y_train_data_adj))
-				model.fit(x_train_data, y_train_data_adj, epochs=10, batch_size=8)
-			else:
-				model.fit(x_train_data, y_train_data)
-			print("DEBUG: DNB Fitted GaussianNB")
+				num_digits = 10
+				print("DEBUG: DNB Creating GaussianNB")
+				model = self.create_model(1024,[512,512,10], 'sigmoid', model_type)
+				print("DEBUG: DNB Fitting GaussianNB")
+				if model_type == 'neural':
+					print("Before: {}".format(y_train_data))
+					y_train_data_adj = np.array([convert(digit, num_digits) for digit in y_train_data])
+					print("After: {}".format(y_train_data_adj))
+					model.fit(x_train_data, y_train_data_adj, epochs=10, batch_size=8)
+				else:
+					model.fit(x_train_data, y_train_data)
+				print("DEBUG: DNB Fitted GaussianNB")
 	
-			x_test_data = [self.read_data(path_beg + i) for i in x_test]   # Random input data
-			y_test_arr = [re.search("^input_[0-9]+_([0-9]+)_[0-9]+\.json$", i) for i in x_test]
-			y_test_data = [int(i.group(1)) for i in y_test_arr if i]
+				x_test_data = [self.read_data(path_beg + i) for i in x_test]   # Random input data
+				y_test_arr = [re.search("^input_[0-9]+_([0-9]+)_[0-9]+\.json$", i) for i in x_test]
+				y_test_data = [int(i.group(1)) for i in y_test_arr if i]
 
 
 
-			x_test_data = np.array(x_test_data).reshape((-1,1024))
-			y_test_data = np.array(y_test_data).reshape((-1))
+				x_test_data = np.array(x_test_data).reshape((-1,1024))
+				y_test_data = np.array(y_test_data).reshape((-1))
 			#print(x_test_data)
 			#print("Length={}".format(len(x_test_data)))
 	
-			print("DEDNG Calling predict")
+				print("DEDNG Calling predict")
 			# Evaluate the model from a sample test data set
-			y_predict = model.predict(x_test_data)
-			print(y_predict)
-			if model_type == 'neural':
-				y_predict = np.array([np.argmax(p) for p in y_predict])
+				y_predict = model.predict(x_test_data)
 				print(y_predict)
+				if model_type == 'neural':
+					y_predict = np.array([np.argmax(p) for p in y_predict])
+					print(y_predict)
 
 	
-			xd = jeff.confusion_matrix(y_test_data, y_predict)
-			if i == 0:
-				sum_matrices = np.zeros(xd.shape)
-			else:
-				sum_matrices = np.add(sum_matrices, xd)
+				xd = jeff.confusion_matrix(y_test_data, y_predict)
+				if i == 0:
+					sum_matrices = np.zeros(xd.shape)
+				else:
+					sum_matrices = np.add(sum_matrices, xd)
 			
-			self.data.insert(len(self.data),x_test)
+				self.data.insert(len(self.data),x_test)
 
-		tp = [sum_matrices[i][i] for i in range(0, len(sum_matrices))]
-		fp = [0]*len(sum_matrices)
-		fn = [0]*len(sum_matrices)
-		for d in range(0, len(sum_matrices)):
-			for d2 in range(0, len(sum_matrices)):
-				if d != d2:
-					fp[d] += sum_matrices[d2][d]
-					fn[d] += sum_matrices[d][d2]
-		sum = np.sum(sum_matrices)
-		tn = [sum - tp[i] - fp[i] - fn[i] for i in range(0, len(sum_matrices))]
-		mcc = [((tp[i]*tn[i])-fp[i]*fn[i])/math.sqrt((tp[i]+fp[i])*(tp[i]+fn[i])*(tn[i]+fp[i])*(tn[i]+fn[i])) for i in range(0, len(sum_matrices))]
-		print(sum_matrices)
-		print(mcc)
+			tp = [sum_matrices[i][i] for i in range(0, len(sum_matrices))]
+			fp = [0]*len(sum_matrices)
+			fn = [0]*len(sum_matrices)
+			for d in range(0, len(sum_matrices)):
+				for d2 in range(0, len(sum_matrices)):
+					if d != d2:
+						fp[d] += sum_matrices[d2][d]
+						fn[d] += sum_matrices[d][d2]
+			sum = np.sum(sum_matrices)
+			tn = [sum - tp[i] - fp[i] - fn[i] for i in range(0, len(sum_matrices))]
+			mcc = [((tp[i]*tn[i])-fp[i]*fn[i])/math.sqrt((tp[i]+fp[i])*(tp[i]+fn[i])*(tn[i]+fp[i])*(tn[i]+fn[i])) for i in range(0, len(sum_matrices))]
+			print(sum_matrices)
+			print(mcc)
+
+			dump(model, "C:/DigitProject/DigitDetector/models/test_model")
+		else:
+			x_train = self.data
+			x_train_data = [self.read_data(path_beg + i) for i in self.data]
+			x_train_data = np.array(x_train_data).reshape((-1,1024))
+			#print([path_beg + i for i in self.data])
+
+			y_train_arr = [re.search("^input_[0-9]+_([0-9]+)_[0-9]+\.json$", i) for i in x_train]
+			y_train_data = [int(i.group(1)) for i in y_train_arr if i]
+			y_train_data = np.array(y_train_data).reshape((-1))
+
+			model = self.create_model(1024,[512,512,10], 'sigmoid', model_type)
+			model.fit(x_train_data, y_train_data)
+
+			mypath = "C:/DigitProject/DigitDetector/FinalChallengeSetJSON/"
+			filess = [f for f in listdir(mypath) if isfile(join(mypath, f))]
+			filess = [re.search("^input([0-9]+)\.json$", i) for i in filess]
+			files = [i.group(0) for i in filess if i]
+			#print(files)
+			numbers = [int(i.group(1)) for i in filess if i]
+			data = [self.read_data(mypath + i) for i in files]
+			data = np.array(data).reshape((-1,1024))
+			print(numbers)
+			predict = model.predict(data)
+
+			print(predict)
+
+			with open(model_type+'.csv', mode='w') as file:
+				writer = csv.writer(file, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
+				for i in range(len(numbers)):
+					writer.writerow([numbers[i],predict[i]])
+
+
+
 		#print("Score was {}.".format(score))
 		#print("Labels were {}.".format(model.metrics_names))
 
