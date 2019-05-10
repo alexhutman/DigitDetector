@@ -18,7 +18,7 @@ from keras.layers import Dense, Activation
 import numpy as np
 import sys
 import random
-from DigitNaiveBayes import DigitNaiveBayes
+from DigitClassifiers import DigitClassifiers
 
 
 
@@ -48,8 +48,8 @@ Main entry point.  Assumes all the arguments passed to it are file names.
 For each argument, reads in the file and the prints it out.
 """
 def main():
-	base_path = "C:/Users/Alex/Dropbox/School Snoot/Spring 2019/AI/DigitDetector/"
-	competition = True
+	base_path = "C:/DigitProject/DigitDetector/"
+	competition = False
 
 	mypath = base_path + "all_digits/"
 	files = [f for f in listdir(mypath) if isfile(join(mypath, f))]
@@ -58,9 +58,9 @@ def main():
 
 	if not competition:
 		partitions = kCross(10, y)
-		DigitNaiveBayes(partitions, base_path, 'neural', competition)
+		DigitClassifiers(partitions, base_path, 'LDA', competition)
 	else:
-		DigitNaiveBayes(y, base_path, 'svm', competition)
+		DigitClassifiers(y, base_path, 'svm', competition)
 
 
   
