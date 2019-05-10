@@ -1,6 +1,7 @@
 
 '''
 Author: Christian Duncan
+Edited By: Alex Hutman, David Lepore, Stephen Kern
 Date: Spring 2019
 Course: CSC350 (Intelligent Systems)
 
@@ -17,7 +18,6 @@ from keras.layers import Dense, Activation
 import numpy as np
 import sys
 import random
-from DigitClassifier import DigitClassifier
 from DigitNaiveBayes import DigitNaiveBayes
 
 
@@ -48,26 +48,19 @@ Main entry point.  Assumes all the arguments passed to it are file names.
 For each argument, reads in the file and the prints it out.
 """
 def main():
-	mypath = "C:/DigitProject/DigitDetector/all_digits/"
-	my01path = "C:/DigitProject/DigitDetector/digit_data/"
-	competition = false
+	base_path = "C:/Users/Alex/Dropbox/School Snoot/Spring 2019/AI/DigitDetector/"
+	competition = True
 
-	
-	
+	mypath = base_path + "all_digits/"
 	files = [f for f in listdir(mypath) if isfile(join(mypath, f))]
 	x = [re.search("^input_[0-9]+_[0-9]+_[0-9]+\.json$", i) for i in files]
-	
 	y = [i.group(0) for i in x if i]
 
 	if not competition:
-
 		partitions = kCross(10, y)
-	#DigitClassifier(partitions, my01path, 'neural')
-		DigitNaiveBayes(partitions, mypath, 'kNN')
+		DigitNaiveBayes(partitions, base_path, 'neural', competition)
 	else:
-		DigitNaiveBayes(y, mypath, 'svm')
-	#train = partitions[0]
-	#test = partitions[1]
+		DigitNaiveBayes(y, base_path, 'svm', competition)
 
 
   

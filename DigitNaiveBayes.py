@@ -26,69 +26,53 @@ def convert(digit, num_digits):
 	return np.array(d)
 
 class DigitNaiveBayes:
-	def __init__(self, data, base_path, model_type):
+	def __init__(self, data, base_path, model_type, isCompetition):
 		self.data = data
+		all_digits_path = base_path + "all_digits/"
+		model_path = base_path + "models/test_model"
+		challenge_path = base_path + "FinalChallengeSetJSON/"
 
-		print("DEBUG: DNB.  Begin")
-		path_beg = base_path
-
-		competition = True
-
-		if not competition: 
+		if not isCompetition: 
+			num_digits = 10
 			sum_matrices = None
+			layers = [1024,395,10] #We looped through [1024,x,10] for all x in [10...1024] and 395 was the best... but is still bad. We tried.
+
 			for i in range(len(self.data)):
+				print("Training on fold {}".format(i))
 				x_test = self.data.pop(i)
 				x_train = self.data
 
-				x_train_data = [[self.read_data(path_beg + i) for i in j] for j in x_train]
+				x_train_data = [[self.read_data(all_digits_path + i) for i in j] for j in x_train]
 				y_train_arr = [[re.search("^input_[0-9]+_([0-9]+)_[0-9]+\.json$", i) for i in x_train[j]] for j in range(len(x_train))]
 				y_train_data = [[int(i.group(1)) for i in y_train_arr[j] if i] for j in range(len(y_train_arr))]
 	
 				x_train_data = np.array(x_train_data).reshape((-1,1024))
 				y_train_data = np.array(y_train_data).reshape((-1))
-			#print(y_train_data)
-			#print("Length={}".format(len(y_train_data)))
-			#print("Length[0]={}".format(len(y_train_data[0])))
-			#print("Length[0][0]={}".format(len(x_train_data[0][0])))
-			#sys.exit(1)
-				num_digits = 10
-				print("DEBUG: DNB Creating GaussianNB")
-				model = self.create_model(1024,[512,512,10], 'sigmoid', model_type)
-				print("DEBUG: DNB Fitting GaussianNB")
+
+				model = self.create_model(1024,layers, 'sigmoid', model_type)
+
 				if model_type == 'neural':
-					print("Before: {}".format(y_train_data))
 					y_train_data_adj = np.array([convert(digit, num_digits) for digit in y_train_data])
-					print("After: {}".format(y_train_data_adj))
-					model.fit(x_train_data, y_train_data_adj, epochs=10, batch_size=8)
+					model.fit(x_train_data, y_train_data_adj, epochs=10, batch_size=6)
 				else:
 					model.fit(x_train_data, y_train_data)
-				print("DEBUG: DNB Fitted GaussianNB")
 	
-				x_test_data = [self.read_data(path_beg + i) for i in x_test]   # Random input data
+				x_test_data = [self.read_data(all_digits_path + i) for i in x_test]   # Random input data
 				y_test_arr = [re.search("^input_[0-9]+_([0-9]+)_[0-9]+\.json$", i) for i in x_test]
 				y_test_data = [int(i.group(1)) for i in y_test_arr if i]
 
-
-
 				x_test_data = np.array(x_test_data).reshape((-1,1024))
 				y_test_data = np.array(y_test_data).reshape((-1))
-			#print(x_test_data)
-			#print("Length={}".format(len(x_test_data)))
-	
-				print("DEDNG Calling predict")
-			# Evaluate the model from a sample test data set
+
+				# Evaluate the model from a sample test data set
 				y_predict = model.predict(x_test_data)
-				print(y_predict)
+
 				if model_type == 'neural':
 					y_predict = np.array([np.argmax(p) for p in y_predict])
-					print(y_predict)
 
-	
-				xd = jeff.confusion_matrix(y_test_data, y_predict)
-				if i == 0:
-					sum_matrices = np.zeros(xd.shape)
-				else:
-					sum_matrices = np.add(sum_matrices, xd)
+				confusion_matrix = jeff.confusion_matrix(y_test_data, y_predict)
+
+				sum_matrices = np.zeros(confusion_matrix.shape) if i==0 else np.add(sum_matrices, confusion_matrix)
 			
 				self.data.insert(len(self.data),x_test)
 
@@ -106,12 +90,13 @@ class DigitNaiveBayes:
 			print(sum_matrices)
 			print(mcc)
 
-			dump(model, "C:/DigitProject/DigitDetector/models/test_model")
+			dump(model, model_path)
 		else:
 			x_train = self.data
-			x_train_data = [self.read_data(path_beg + i) for i in self.data]
+			x_train_data = [self.read_data(all_digits_path + i) for i in self.data]
+
 			x_train_data = np.array(x_train_data).reshape((-1,1024))
-			#print([path_beg + i for i in self.data])
+
 
 			y_train_arr = [re.search("^input_[0-9]+_([0-9]+)_[0-9]+\.json$", i) for i in x_train]
 			y_train_data = [int(i.group(1)) for i in y_train_arr if i]
@@ -120,13 +105,11 @@ class DigitNaiveBayes:
 			model = self.create_model(1024,[512,512,10], 'sigmoid', model_type)
 			model.fit(x_train_data, y_train_data)
 
-			mypath = "C:/DigitProject/DigitDetector/FinalChallengeSetJSON/"
-			filess = [f for f in listdir(mypath) if isfile(join(mypath, f))]
-			filess = [re.search("^input([0-9]+)\.json$", i) for i in filess]
-			files = [i.group(0) for i in filess if i]
-			#print(files)
-			numbers = [int(i.group(1)) for i in filess if i]
-			data = [self.read_data(mypath + i) for i in files]
+			files_regexp = [re.search("^input([0-9]+)\.json$", f) for f in listdir(challenge_path) if isfile(join(challenge_path, f))]
+			files = [i.group(0) for i in files_regexp if i]
+
+			numbers = [int(i.group(1)) for i in files_regexp if i]
+			data = [self.read_data(challenge_path + i) for i in files]
 			data = np.array(data).reshape((-1,1024))
 			print(numbers)
 			predict = model.predict(data)
@@ -138,18 +121,10 @@ class DigitNaiveBayes:
 				for i in range(len(numbers)):
 					writer.writerow([numbers[i],predict[i]])
 
-
-
-		#print("Score was {}.".format(score))
-		#print("Labels were {}.".format(model.metrics_names))
-
-		# Make a few predictions
-		#x_input = np.array([[0,0], [0,1], [1,0], [1,1]])
-		#y_output = model.predict(x_input)
-		#print("Result of {} is {}.".format(x_input, y_output))
 	""" 
-Reads in the given JSON file as outlined in the README.txt file.
-"""
+	Reads in the given JSON file as outlined in the README.txt file.
+	"""
+
 	def read_data(self, file):
 		try:
 			with open(file, 'r') as inf:
@@ -160,16 +135,14 @@ Reads in the given JSON file as outlined in the README.txt file.
 			print("File Not Found: {0}.".format(err))
 
 	def create_model(self, in_dim, units, activation, model_type):
-		assert model_type in ['neural','svm','bayes', 'kNN','LDA']
+		assert model_type in ['neural','svm','bayes', 'kNN','LDA'] #If not one of these, throw an error
 		
 		if model_type == 'neural':
 			model = Sequential()
 			#model = self.create_model(1024,[1024,50,10], 'sigmoid', model_type)
-			model.add(Dense(units=units[0], input_dim=in_dim)) # First (hidden) layer
-			model.add(Activation(activation))
+			model.add(Dense(units=units[0], input_dim=in_dim, kernel_initializer='normal', activation=activation))
 			for i in units[1:]:
-				model.add(Dense(units=i)) 
-				model.add(Activation(activation))
+				model.add(Dense(units=i, kernel_initializer='normal', activation=activation))
 			model.compile(loss='mean_squared_error',
 		    	          optimizer='sgd',
 		    	          metrics=['accuracy'])
